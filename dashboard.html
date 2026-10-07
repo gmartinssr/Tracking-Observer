@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tracking Observer</title>
+  <link rel="stylesheet" href="/__tracker/dashboard.css">
+</head>
+<body>
+  <header><h1>Tracking Observer</h1><span id="status" class="status">conectando...</span><button id="clear">Limpar</button></header>
+  <main>
+    <section class="panel"><h2>Rota atual</h2><div id="route" class="route"></div></section>
+    <section class="panel"><h2>Eventos em tempo real</h2><div id="events" class="events"></div></section>
+  </main>
+  <script>
+    const route = document.querySelector("#route"), events = document.querySelector("#events"), status = document.querySelector("#status");
+    const labels = { click: "Clique", "fetch:start": "Fetch", "fetch:end": "Resposta", "fetch:error": "Erro no fetch", "xhr:start": "XHR", "xhr:end": "Resposta XHR", resource: "Recurso", "page:ready": "Página pronta", "function:start": "Função", "function:end": "Função concluída", mark: "Marcador", error: "Erro" };
+    const escapeHtml = (text) => String(text).replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+    function addEvent(event) {
+      if (!labels[event.type]) return;
+      const detail = event.label || event.url || event.file || event.page || "";
+      const card = document.createElement("article");
+      card.className = "event " + (event.type === "error" ? "error" : "");
+      card.innerHTML = `<strong>${labels[event.type]}</strong><span>${escapeHtml(detail)}</span><small>${new Date(event.timestamp).toLocaleTimeString()} · ${event.elapsedMs} ms</small>`;
+      events.prepend(card);
+      if (["click", "fetch:start", "xhr:start", "page:ready"].includes(event.type)) {
+        if (route.children.length) route.insertAdjacentHTML("beforeend", '<span class="arrow">→</span>');
+        const node = document.createElement("div"); node.className = "route-node"; node.textContent = detail || labels[event.type]; route.appendChild(node);
+      }
+    }
+    document.querySelector("#clear").onclick = () => { events.innerHTML = ""; route.innerHTML = ""; };
+    const stream = new EventSource("/__tracker/stream");
+    stream.onopen = () => { status.textContent = "conectado"; status.className = "status online"; };
+    stream.onerror = () => { status.textContent = "desconectado"; status.className = "status"; };
+    stream.onmessage = (message) => addEvent(JSON.parse(message.data));
+  </script>
+</body>
+</html>

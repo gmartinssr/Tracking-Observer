@@ -1,0 +1,14 @@
+{
+  "name": "tracking-observer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rastreamento em tempo real de fluxos em projetos web.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node tracker.js",
+    "run": "node run.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
